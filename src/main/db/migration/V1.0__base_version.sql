@@ -31,7 +31,7 @@ CREATE TABLE subtypes (
 
 CREATE TABLE cardtypes (
   basecard_id INT(11) NOT NULL,
-  type_id INT(11) NOT NULL
+  type_id INT(11) NOT NULL,
   PRIMARY KEY (basecard_id, type_id)
   ) ENGINE InnoDB  CHARACTER SET utf8;
 
@@ -48,7 +48,7 @@ CREATE TABLE expansionsets (
 
 CREATE TABLE colors (
   id CHAR(1) NOT NULL PRIMARY KEY,
-  color VARCHAR(12) NOT NULL,
+  color VARCHAR(12) NOT NULL
   ) ENGINE InnoDB  CHARACTER SET utf8;
 
 INSERT INTO colors (color, id) VALUES ('White','W');
