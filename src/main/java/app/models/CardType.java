@@ -6,6 +6,5 @@ import org.javalite.activejdbc.annotations.BelongsTo;
 /**
  * 
  */
-@BelongsTo(parent = Rarity.class, foreignKeyName = "rarity")
-public class Card extends Model {
+public class CardType extends Model {
 }

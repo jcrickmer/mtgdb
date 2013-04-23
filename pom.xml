@@ -8,7 +8,7 @@
   <name>MTG DB</name>
   <properties>
     <jdbc.driver>com.mysql.jdbc.Driver</jdbc.driver>
-    <jdbc.url>jdbc:mysql://localhost/mtgdb_dev</jdbc.url>
+    <jdbc.url>jdbc:mysql://localhost/mtgdb</jdbc.url>
     <jdbc.user>mtgdb</jdbc.user>
     <jdbc.password>password</jdbc.password>
     

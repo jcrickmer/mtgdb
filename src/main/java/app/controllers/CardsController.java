@@ -3,6 +3,7 @@ package app.controllers;
 import org.javalite.activeweb.AppController;
 import org.javalite.activeweb.annotations.DELETE;
 import org.javalite.activeweb.annotations.POST;
+import app.models.BaseCard;
 import app.models.Card;
 
 /**
@@ -16,7 +17,9 @@ public class CardsController extends AppController {
 
     public void show(){
         //this is to protect from URL hacking
-        Card c = (Card) Card.findById(getId());
+        //Card c = (Card) Card.findById(getId());
+	Card c = (Card) Card.first("multiverseid = ?", getId());
+	//BaseCard bc = (BaseCard) c.parent(BaseCard.class);
         if(c != null){
             view("card", c);
         }else{
