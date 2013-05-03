@@ -30,9 +30,9 @@ CREATE TABLE basecards (
   rules_text VARCHAR(1000),
   mana_cost VARCHAR(60) NOT NULL DEFAULT '',
   cmc SMALLINT NOT NULL DEFAULT 0,
-  power SMALLINT,
-  toughness SMALLINT,
-  loyalty SMALLINT,
+  power CHAR(4),
+  toughness CHAR(4),
+  loyalty CHAR(4),
   created_at DATETIME,
   updated_at DATETIME
   ) ENGINE InnoDB  CHARACTER SET utf8;
@@ -444,11 +444,11 @@ CREATE TABLE cardcolors (
 
 INSERT INTO expansionsets (name) VALUES ('Alpha');
 
-INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Plains', '{W}', '', 0, NULL, NULL, NULL);
-INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Island', '{U}', '', 0, NULL, NULL, NULL);
-INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Swamp', '{B}', '', 0, NULL, NULL, NULL);
-INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Mountain', '{R}', '', 0, NULL, NULL, NULL);
-INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Forest', '{G}', '', 0, NULL, NULL, NULL);
+INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Plains', '{w}', '', 0, NULL, NULL, NULL);
+INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Island', '{u}', '', 0, NULL, NULL, NULL);
+INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Swamp', '{b}', '', 0, NULL, NULL, NULL);
+INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Mountain', '{r}', '', 0, NULL, NULL, NULL);
+INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Forest', '{g}', '', 0, NULL, NULL, NULL);
 
 INSERT INTO cards (expansionset_id, basecard_id, rarity, multiverseid, flavor_text) VALUES (1, 1, 'c', 292, NULL);
 INSERT INTO cards (expansionset_id, basecard_id, rarity, multiverseid, flavor_text) VALUES (1, 2, 'c', 294, NULL);
@@ -478,9 +478,20 @@ INSERT INTO cardsubtypes (basecard_id, subtype_id, position) VALUES (5, 82, 0);
 
 
 INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Lord of the Pit', 'Flying, trample
-At the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can''t, Lord of the Pit deals 7 damage to you.', '{4}{B}{B}{B}', 7, 7, 7, NULL);
+At the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can''t, Lord of the Pit deals 7 damage to you.', '{4}{b}{b}{b}', 7, 7, 7, NULL);
 INSERT INTO cards (expansionset_id, basecard_id, rarity, multiverseid, flavor_text) VALUES (1, 6, 'r', 70, NULL);
 INSERT INTO cardtypes (basecard_id, type_id, position) VALUES (6, 3, 0);
 INSERT INTO cardsubtypes (basecard_id, subtype_id, position) VALUES (6, 51, 0);
 INSERT INTO cardcolors (basecard_id, color_id) VALUES (6, 'B');
+
+
+/*
+INSERT INTO basecards (name, rules_text, mana_cost, cmc, power, toughness, loyalty) VALUES ('Draconian', 'Each other creature you control that''s a Dragonian or Dragon gets +1/+1.', '{1}{b}{r}', 3, 2, 2, NULL);
+INSERT INTO cards (expansionset_id, basecard_id, rarity, multiverseid, flavor_text) VALUES (4, 7, 'u', 4000001, 'Guy likes mean dudes.');
+INSERT INTO cardtypes (basecard_id, type_id, position) VALUES (7, 3, 0);
+INSERT INTO subtypes (subtype) VALUES ('Draconian');
+INSERT INTO cardsubtypes (basecard_id, subtype_id, position) VALUES (7, 286, 0);
+INSERT INTO cardcolors (basecard_id, color_id) VALUES (7, 'B');
+INSERT INTO cardcolors (basecard_id, color_id) VALUES (7, 'R');
+*/
 
