@@ -1,8 +1,11 @@
 <@content for="title">Card: ${card.basecard.name}</@content>
 <@link_to>Back to all cards</@link_to>
 <h2>${card.basecard.name}</h2>
-<#if card.multiverseid < 10000000 >
+<#if card.multiverseid < 1000000 >
 <img src="http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.multiverseid}&type=card">
+</#if>
+<#if (card.multiverseid >= 1000000) >
+<img src="/mtgdb/cardImage?multiverseid=${card.multiverseid}">
 </#if>
 <p><strong>Multiverse Id:</strong> ${card.multiverseid}</p>
 <p><strong>Color(s):</strong> <#list card.basecard.colors as ccc>${ccc.color} </#list></p>

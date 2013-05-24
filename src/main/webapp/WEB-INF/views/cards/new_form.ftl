@@ -45,12 +45,9 @@
       <tr>
         <td>Type</td>
         <td>
-          <select name="type_id">
+          <@select name="type_id" list=typesList>
 	    <option value=""></option>
-            <#list types as type>
-              <option value="${type.id}">${type.type}</option>
-            </#list>
-          </select>
+          </@>
           *
           <span class="error">${(flasher.errors.type_id)!}</span>
         </td>

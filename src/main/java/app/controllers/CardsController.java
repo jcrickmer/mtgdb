@@ -16,6 +16,12 @@ import app.models.Subtype;
 import app.models.ManaCostFormatException;
 
 import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.javalite.activeweb.freemarker.SelectOption;
 
 /**
  * 
@@ -46,6 +52,13 @@ public class CardsController extends AppController {
 	    org.javalite.activejdbc.Errors errs = new org.javalite.activejdbc.Errors();
 	    if (! this.requestHas("name") || this.param("name").equals("")) {
 		errs.put("name","Name is a required field.");
+	    }
+	    if (! this.requestHas("mana_cost") || this.param("mana_cost").equals("")) {
+		if (this.requestHas("type_id") && this.param("type_id").equals(Type.Land().getString("type"))) {
+		    // ok! If they don't put a mana cost for Land, that is ok.
+		} else {
+		    errs.put("mana_cost","Mana Cost is a required field unless the type is Land.");
+		}
 	    }
 	    if (! this.requestHas("type_id") || this.param("type_id").equals("")) {
 		errs.put("type_id","Type is a required field.");
@@ -151,11 +164,45 @@ public class CardsController extends AppController {
         redirect(CardsController.class);
     }
 
+    /**
+     * Convience method to get the "params" value out of Flasher.
+     */
+    Map getFParams() {
+	Map result = null;
+	Object flashMap = (Map) session().get("flasher");
+	if (flashMap != null && flashMap instanceof Map) {
+	    Object obj = ((Map) flashMap).get("params");
+	    if (obj != null && obj instanceof Map) {
+		result = (Map)obj;
+	    }
+	}
+	if (result == null) {
+	    result = new HashMap();
+	}
+	return result;
+    }
+
+
     public void newForm() {
+	Map fParams = getFParams();
         view("expansionsets", ExpansionSet.findAll());
         view("rarities", Rarity.findAll());
         view("colors", Color.findAll());
-        view("types", Type.findAll());
+
+	List<Type> types = Type.findAll();
+        view("types", types);
+	List<SelectOption> typesList = new ArrayList();
+	Iterator<Type> it = types.iterator();
+	while (it.hasNext()) {
+	    Type cType = it.next();
+	    int cTypeId = cType.getInteger("id").intValue();
+	    SelectOption so = new SelectOption(cTypeId, cType.getString("type"));
+	    //logError("param is " + fParams.get("type_id"));
+	    so.setSelected(fParams.get("type_id") != null && fParams.get("type_id").equals("" + cTypeId));
+	    typesList.add(so);
+	}
+	view("typesList", typesList);
+
         view("subtypes", Subtype.findAll());
     }
 }

@@ -22,16 +22,25 @@ import org.javalite.activeweb.controller_filters.DBConnectionFilter;
 import org.javalite.activeweb.controller_filters.TimingFilter;
 import app.controllers.ExpansionSetsController;
 import app.controllers.CardsController;
+import app.controllers.CardImageController;
 
+import us.newplatyp.util.Configuration;
 
 /**
- * @author Igor Polevoy
+ * 
  */
 public class AppControllerConfig extends AbstractControllerConfig {
 
+	public static us.newplatyp.util.Configuration config = new us.newplatyp.util.Configuration();
+
     public void init(AppContext context) {
+		config.setProperty("path.output.card","output");
+		config.setProperty("path.symbols","symbols");
+		config.setProperty("template.definition.filename","input/templates/basic/basic.xml");
+
         addGlobalFilters(new TimingFilter());
         add(new DBConnectionFilter()).to(ExpansionSetsController.class);
         add(new DBConnectionFilter()).to(CardsController.class);
+        add(new DBConnectionFilter()).to(CardImageController.class);
     }
 }
