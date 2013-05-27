@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.google.gson.Gson;
+
 import org.javalite.activeweb.freemarker.SelectOption;
 
 /**
@@ -183,6 +185,25 @@ public class CardsController extends AppController {
     }
 
 
+    @POST
+    public void nameLookup() {
+	ArrayList<String> vals = new ArrayList();
+	if (this.requestHas("namePartial")) {
+	    List<BaseCard> cards = BaseCard.where("LOWER(name) LIKE ?", this.param("namePartial").toLowerCase() + "%") // ASSUMPTION - the ActiveJDBC where function will SQL-escape the data.
+		.limit(15)
+		.orderBy("name ASC");
+	    Iterator<BaseCard> it = cards.iterator();
+	    while (it.hasNext()) {
+		BaseCard bc = it.next();
+		vals.add(bc.getString("name"));
+	    }
+	}
+	Gson gson = new Gson();
+	Map map = new HashMap();
+	map.put("terms", vals);
+	respond(gson.toJson(map)).contentType("application/json").status(200);
+    }
+
     public void newForm() {
 	Map fParams = getFParams();
         view("expansionsets", ExpansionSet.findAll());
@@ -204,5 +225,12 @@ public class CardsController extends AppController {
 	view("typesList", typesList);
 
         view("subtypes", Subtype.findAll());
+	/* andy piece ofcode to see what is the in context.  I have not had much luck finding debug tools for Freemarker
+	Map<String,Object> bbb = values();
+	Iterator<String> cit = bbb.keySet().iterator();
+	while (cit.hasNext()) {
+	    logError("context: " + cit.next());
+	}
+	*/
     }
 }

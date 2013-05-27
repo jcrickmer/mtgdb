@@ -10,9 +10,29 @@
       <tr>
         <td>Name</td>
         <td>
-          <input type="text" name="name" value="${(flasher.params.name)!}">
+          <input type="text" id="name_field" name="name" value="${(flasher.params.name)!}">
           *
           <span class="error">${(flasher.errors.name)!}</span>
+          <script type="text/javascript">
+function nameLookupCB(request, response) {
+  console.log("request is " + request.term);
+  $.ajax({
+    type: "POST",
+    url: "<@controller_link controller="cards" action="nameLookup" />",
+    data: { namePartial: request.term, limit: 15 },
+    dataType: "json",
+    success: function(data, textStatus, jqXHR) {
+      console.log("response is " + response);
+      console.log("status: " + textStatus);
+      console.dir(data);
+      response(data.terms);
+    }
+  });
+
+}
+
+$( "#name_field" ).autocomplete({ delay: 500, minLength: 3, source: nameLookupCB});
+          </script>
         </td>
       </tr>
       <tr>
