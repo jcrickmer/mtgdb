@@ -17,6 +17,7 @@ limitations under the License.
 package app.config;
 
 import org.javalite.activeweb.freemarker.AbstractFreeMarkerConfig;
+import app.util.ControllerLinkTag;
 
 /**
  * @author Igor Polevoy
@@ -26,5 +27,6 @@ public class FreeMarkerConfig extends org.javalite.activeweb.freemarker.Abstract
     public void init() {
         //this is to override a strange FreeMarker default processing of numbers 
         getConfiguration().setNumberFormat("0.##");
+	registerTag("controller_link", new ControllerLinkTag());
     }
 }
