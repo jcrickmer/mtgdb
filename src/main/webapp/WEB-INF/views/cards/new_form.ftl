@@ -31,7 +31,12 @@ function nameLookupCB(request, response) {
 
 }
 
-$( "#name_field" ).autocomplete({ delay: 500, minLength: 3, source: nameLookupCB});
+function nameBlurred(event, ui) {
+    console.log("Moving on..." + $("#name_field").val());
+    /* BOOKMARK!!  This is where we need to go and ask the CardsController for getBaseCardByName - http://smoker:8080/mtgdb/cards/getBaseCardByName?name=Forest */
+}
+
+$("#name_field").autocomplete({ delay: 500, minLength: 3, source: nameLookupCB, change: nameBlurred});
           </script>
         </td>
       </tr>

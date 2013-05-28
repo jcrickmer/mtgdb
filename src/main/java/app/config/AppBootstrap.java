@@ -21,6 +21,11 @@ import app.services.GreeterModule;
 import com.google.inject.Guice;
 import org.javalite.activeweb.Configuration;
 
+import com.google.gson.GsonBuilder;
+
+import app.models.BaseCard;
+import app.adapters.BaseCardAdapter;
+
 /**
  * @author Igor Polevoy
  */
@@ -28,5 +33,8 @@ public class AppBootstrap extends Bootstrap {
     public void init(AppContext context) {        
         setInjector(Guice.createInjector(new GreeterModule()));
         Configuration.setUseDefaultLayoutForErrors(true);
+	GsonBuilder jsonBuilder = new GsonBuilder();
+	jsonBuilder.registerTypeAdapter(BaseCard.class, new BaseCardAdapter());
+	context.set("json", jsonBuilder.create());
     }
 }

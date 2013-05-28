@@ -47,6 +47,16 @@ public class CardsController extends AppController {
         }
     }
     
+    public void getBaseCardByName() {
+	Gson gson = (Gson)(this.appContext().get("json"));
+	Map map = new HashMap();
+	if (this.requestHas("name")) {
+	    BaseCard bc = (BaseCard) BaseCard.first("name = ?", this.param("name"));
+	    map.put("BaseCard", bc);
+	}
+	respond(gson.toJson(map)).contentType("application/json").status(200);
+    }
+
     @POST
     public void create(){
 	// let's check the "must have" fields.  We are goign to do tis here rather than in the model controllers because we are building an aggregate.
@@ -198,7 +208,7 @@ public class CardsController extends AppController {
 		vals.add(bc.getString("name"));
 	    }
 	}
-	Gson gson = new Gson();
+	Gson gson = (Gson) (this.appContext().get("json"));
 	Map map = new HashMap();
 	map.put("terms", vals);
 	respond(gson.toJson(map)).contentType("application/json").status(200);
