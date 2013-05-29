@@ -10,8 +10,8 @@ html, body{
 	background:white;
 }
 
-body {
-    font: 15px/22.5px "Helvetica Neue",HelveticaNeue,Helvetica,Arial,sans-serif;
+body, textarea {
+    font: 15px "Helvetica Neue",HelveticaNeue,Helvetica,Arial,sans-serif;
 }
 
 a{

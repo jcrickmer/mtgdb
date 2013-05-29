@@ -21,39 +21,70 @@ $("<link/>", {
           <span class="error">${(flasher.errors.name)!}</span>
           <script type="text/javascript">
 function nameLookupCB(request, response) {
-    console.log("request is " + request.term);
+    //console.log("request is " + request.term);
     $.ajax({
             type: "POST",
             url: "<@controller_link controller="cards" action="nameLookup" />",
             data: { namePartial: request.term, limit: 15 },
             dataType: "json",
             success: function(data, textStatus, jqXHR) {
-                console.log("response is " + response);
-                console.log("status: " + textStatus);
-                console.dir(data);
+                //console.log("response is " + response);
+                //console.log("status: " + textStatus);
+                //console.dir(data);
                 response(data.terms);
             }
     });
 }
 
+/** Returns an array of strings */
+function parseManaCost(mana_cost) {
+    var parts = mana_cost.replace(/{/g,"").split("}");
+    var results = new Array();
+    for (var t = 0; t < parts.length; t++) {
+        if (parts[t].length > 0) {
+	      results.push(parts[t].toUpperCase());
+        }
+    }
+    return results;
+}
+
+function parseManaCostToElement(mana_cost, elementSelector) {
+    var symbols = parseManaCost(mana_cost);
+    for (var y = 0; y < symbols.length; y++) {
+        $("<img/>", {
+                     alt: symbols[y],
+                     src: "${context_path}/images/symbols/symbol_mana_" + symbols[y] + "_small.gif"
+                    }).appendTo(elementSelector);
+    }
+    return symbols;
+}
+
 function nameBlurred(event, ui) {
-    console.log("Moving on..." + $("#name_field").val());
+    //console.log("Moving on..." + $("#name_field").val());
     $.ajax({
         type: "POST",
         url: "<@controller_link controller="cards" action="getBaseCardByName" />",
         data: { name: $("#name_field").val()},
         dataType: "json",
         success: function(data, textStatus, jqXHR) {
-            console.log("nameBlurred status: " + textStatus);
-            console.dir(data);
+            //console.log("nameBlurred status: " + textStatus);
+            //console.dir(data);
             $("#rules_text").text(data.BaseCard.rules_text);
             $("#rules_text").attr("disabled", "disabled");
             $("#cmc").text(data.BaseCard.cmc);
             $("#cmc").attr("disabled", "disabled");
-            $("#color").html(data.BaseCard.color);
-            $("#mana_cost").html(data.BaseCard.mana_cost);
+            $("#color").html("");
+            var ccc = "";
+            for (var h = 0; h < data.BaseCard.color.length; h++ ) {
+                if (h > 0) { ccc = ccc.concat(", "); }
+                ccc = ccc.concat(data.BaseCard.color[h].color); 
+            }
+            $("#color").html(ccc);
+            $("#mana_cost").html("");
+            parseManaCostToElement(data.BaseCard.mana_cost, "#mana_cost");
             $("#mana_cost_f").hide();
             $("#mana_cost_fr").hide();
+
             $("#power").val(data.BaseCard.power);
             $("#power").attr("disabled", "disabled");
             $("#toughness").val(data.BaseCard.toughness);
