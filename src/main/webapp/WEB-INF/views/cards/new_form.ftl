@@ -77,7 +77,7 @@ function nameBlurred(event, ui) {
             var ccc = "";
             for (var h = 0; h < data.BaseCard.color.length; h++ ) {
                 if (h > 0) { ccc = ccc.concat(", "); }
-                ccc = ccc.concat(data.BaseCard.color[h].color); 
+                ccc = ccc.concat(data.BaseCard.color[h]); 
             }
             $("#color").html(ccc);
             $("#mana_cost").html("");
