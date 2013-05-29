@@ -54,7 +54,6 @@ public class CardsController extends AppController {
 	Map map = new HashMap();
 	if (this.requestHas("name")) {
 	    BaseCard bc = (BaseCard) BaseCard.first("name = ?", this.param("name"));
-	    logError("BASECARD TYPE IS " + bc.get("type").getClass());
 	    map.put("BaseCard", bc);
 	}
 	respond(gson.toJson(map)).contentType("application/json").status(200);
