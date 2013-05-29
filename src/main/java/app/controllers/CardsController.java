@@ -2,6 +2,7 @@ package app.controllers;
 
 import org.javalite.activeweb.AppController;
 import org.javalite.activeweb.annotations.DELETE;
+import org.javalite.activeweb.annotations.GET;
 import org.javalite.activeweb.annotations.POST;
 import app.models.BaseCard;
 import app.models.Card;
@@ -47,11 +48,13 @@ public class CardsController extends AppController {
         }
     }
     
+    @POST
     public void getBaseCardByName() {
 	Gson gson = (Gson)(this.appContext().get("json"));
 	Map map = new HashMap();
 	if (this.requestHas("name")) {
 	    BaseCard bc = (BaseCard) BaseCard.first("name = ?", this.param("name"));
+	    logError("BASECARD TYPE IS " + bc.get("type").getClass());
 	    map.put("BaseCard", bc);
 	}
 	respond(gson.toJson(map)).contentType("application/json").status(200);
@@ -197,6 +200,11 @@ public class CardsController extends AppController {
 
     @POST
     public void nameLookup() {
+	int limit = 15;
+	try {
+	    limit = Integer.parseInt(this.param("limit"));
+	} catch (Exception e) { }
+
 	ArrayList<String> vals = new ArrayList();
 	if (this.requestHas("namePartial")) {
 	    List<BaseCard> cards = BaseCard.where("LOWER(name) LIKE ?", this.param("namePartial").toLowerCase() + "%") // ASSUMPTION - the ActiveJDBC where function will SQL-escape the data.

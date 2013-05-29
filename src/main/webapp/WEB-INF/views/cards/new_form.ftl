@@ -1,5 +1,11 @@
 <@content for="title">Add new card</@content>
-
+<script type="text/javascript">
+$("<link/>", {
+   rel: "stylesheet",
+   type: "text/css",
+   href: "${context_path}/css/new_card.css"
+}).appendTo("head");
+</script>
 <span class="error_message"><@flash name="message"/></span>
 <h2>Adding new card</h2>
 
@@ -15,25 +21,47 @@
           <span class="error">${(flasher.errors.name)!}</span>
           <script type="text/javascript">
 function nameLookupCB(request, response) {
-  console.log("request is " + request.term);
-  $.ajax({
-    type: "POST",
-    url: "<@controller_link controller="cards" action="nameLookup" />",
-    data: { namePartial: request.term, limit: 15 },
-    dataType: "json",
-    success: function(data, textStatus, jqXHR) {
-      console.log("response is " + response);
-      console.log("status: " + textStatus);
-      console.dir(data);
-      response(data.terms);
-    }
-  });
-
+    console.log("request is " + request.term);
+    $.ajax({
+            type: "POST",
+            url: "<@controller_link controller="cards" action="nameLookup" />",
+            data: { namePartial: request.term, limit: 15 },
+            dataType: "json",
+            success: function(data, textStatus, jqXHR) {
+                console.log("response is " + response);
+                console.log("status: " + textStatus);
+                console.dir(data);
+                response(data.terms);
+            }
+    });
 }
 
 function nameBlurred(event, ui) {
     console.log("Moving on..." + $("#name_field").val());
-    /* BOOKMARK!!  This is where we need to go and ask the CardsController for getBaseCardByName - http://smoker:8080/mtgdb/cards/getBaseCardByName?name=Forest */
+    $.ajax({
+        type: "POST",
+        url: "<@controller_link controller="cards" action="getBaseCardByName" />",
+        data: { name: $("#name_field").val()},
+        dataType: "json",
+        success: function(data, textStatus, jqXHR) {
+            console.log("nameBlurred status: " + textStatus);
+            console.dir(data);
+            $("#rules_text").text(data.BaseCard.rules_text);
+            $("#rules_text").attr("disabled", "disabled");
+            $("#cmc").text(data.BaseCard.cmc);
+            $("#cmc").attr("disabled", "disabled");
+            $("#color").html(data.BaseCard.color);
+            $("#mana_cost").html(data.BaseCard.mana_cost);
+            $("#mana_cost_f").hide();
+            $("#mana_cost_fr").hide();
+            $("#power").val(data.BaseCard.power);
+            $("#power").attr("disabled", "disabled");
+            $("#toughness").val(data.BaseCard.toughness);
+            $("#toughness").attr("disabled", "disabled");
+            $("#loyalty").val(data.BaseCard.loyalty);
+            $("#loyalty").attr("disabled", "disabled");
+        }
+    });
 }
 
 $("#name_field").autocomplete({ delay: 500, minLength: 3, source: nameLookupCB, change: nameBlurred});
@@ -43,34 +71,34 @@ $("#name_field").autocomplete({ delay: 500, minLength: 3, source: nameLookupCB, 
       <tr>
         <td>Rules Text</td>
         <td>
-          <textarea name="rules_text">${(flasher.params.rules_text)!}</textarea>
+          <textarea id="rules_text" name="rules_text">${(flasher.params.rules_text)!}</textarea>
           <span class="error">${(flasher.errors.rules_text)!}</span>
         </td>
       </tr>
       <tr>
         <td>Mana Cost</td>
         <td>
-          <input type="text" name="mana_cost" value="${(flasher.params.mana_cost)!}">
-          *
+          <span id="mana_cost"></span><input type="text" id="mana_cost_f" name="mana_cost" value="${(flasher.params.mana_cost)!}">
+          <span id="mana_cost_fr">*</span>
           <span class="error">${(flasher.errors.mana_cost)!}</span>
         </td>
       </tr>
       <tr>
         <td>Converted Mana Cost</td>
         <td>
-          <i>to be calculated</i>
+          <span id="cmc"><i>to be calculated</i></span>
         </td>
       </tr>
       <tr>
         <td>Color</td>
         <td>
-          <i>to be calculated</i>
+          <span id="color"><i>to be calculated</i></span>
         </td>
       </tr>
       <tr>
         <td>Type</td>
         <td>
-          <@select name="type_id" list=typesList>
+          <@select id="type" name="type_id" list=typesList>
 	    <option value=""></option>
           </@>
           *
@@ -92,21 +120,21 @@ $("#name_field").autocomplete({ delay: 500, minLength: 3, source: nameLookupCB, 
       <tr>
         <td>Power</td>
         <td>
-          <input type="text" name="power" value="${(flasher.params.power)!}">
+          <input type="text" id="power" name="power" value="${(flasher.params.power)!}">
           <span class="error">${(flasher.errors.power)!}</span>
         </td>
       </tr>
       <tr>
         <td>Toughness</td>
         <td>
-          <input type="text" name="toughness" value="${(flasher.params.toughness)!}">
+          <input type="text" id="toughness" name="toughness" value="${(flasher.params.toughness)!}">
           <span class="error">${(flasher.errors.toughness)!}</span>
         </td>
       </tr>
       <tr>
         <td>Loyalty</td>
         <td>
-          <input type="text" name="loyalty" value="${(flasher.params.loyalty)!}">
+          <input type="text" id="loyalty" name="loyalty" value="${(flasher.params.loyalty)!}">
           <span class="error">${(flasher.errors.loyalty)!}</span>
         </td>
       </tr>
