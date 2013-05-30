@@ -40,6 +40,7 @@ public class BaseCardAdapter extends TypeAdapter<BaseCard> {
 	 }
 	 writer.beginObject();
 	 //writer.name("multiserverid").value(value.getInteger("multiverseid"));
+	 writer.name("id").value(value.getInteger("id"));
 	 writer.name("name").value(value.getString("name"));
 	 writer.name("power").value(value.getString("power"));
 	 writer.name("toughness").value(value.getString("toughness"));
@@ -62,7 +63,7 @@ public class BaseCardAdapter extends TypeAdapter<BaseCard> {
 	 Iterator<Color> it = colorList.iterator();
 	 while (it.hasNext()) {
 	     Color cColor = it.next();
-	     writer.value(cColor.getString("color"));
+             writer.value(cColor.getString("color"));
 	 }
 	 writer.endArray();
 	 return;
