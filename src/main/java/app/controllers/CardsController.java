@@ -1,5 +1,6 @@
 package app.controllers;
 
+import org.javalite.activejdbc.Base;
 import org.javalite.activeweb.AppController;
 import org.javalite.activeweb.annotations.DELETE;
 import org.javalite.activeweb.annotations.GET;
@@ -59,131 +60,148 @@ public class CardsController extends AppController {
 	respond(gson.toJson(map)).contentType("application/json").status(200);
     }
 
+    private class RollItBackException extends Exception {
+	RollItBackException() {
+	    super();
+	}
+	RollItBackException(String msg) {
+	    super(msg);
+	}
+    }
+
     @POST
+    /**
+     * Create a new Card, and create the BaseCard in the process, if it does not already exist.
+     *
+     * NOTE - I have not tested the transaction wrappers failure
+     * conditions.  Nor, have I tested violation of unique indices.
+     */
     public void create(){
-	BaseCard bcard = null;
-	// let's check the "must have" fields.  We are goign to do tis here rather than in the model controllers because we are building an aggregate.
-	{
+	try {
+	    Base.connection().setAutoCommit(false);
 	    org.javalite.activejdbc.Errors errs = new org.javalite.activejdbc.Errors();
-	    if (this.requestHas("basecard_id") && ! this.param("basecard_id").equals("")) {
-		// we are building from an existing base card!!!  Woot!
-		bcard = BaseCard.findById(new Integer(this.param("basecard_id")));
-		if (bcard == null) {
-		    errs.put("message","Well, this is a problem.  It looks like you specified a card as the base card, but I don't know what card that is.");
-		}
-	    } else {
-		if (! this.requestHas("name") || this.param("name").equals("")) {
-		    errs.put("name","Name is a required field.");
-		}
-		if (! this.requestHas("mana_cost") || this.param("mana_cost").equals("")) {
-		    if (this.requestHas("type_id") && this.param("type_id").equals(Type.Land().getString("type"))) {
-			// ok! If they don't put a mana cost for Land, that is ok.
+	    try {
+		BaseCard bcard = null;
+		// let's check the "must have" fields.  We are goign to do tis here rather than in the model controllers because we are building an aggregate.
+		{
+		    if (this.requestHas("basecard_id") && ! this.param("basecard_id").equals("")) {
+			// we are building from an existing base card!!!  Woot!
+			bcard = BaseCard.findById(new Integer(this.param("basecard_id")));
+			if (bcard == null) {
+			    errs.put("message","Well, this is a problem.  It looks like you specified a card as the base card, but I don't know what card that is.");
+			}
 		    } else {
-			errs.put("mana_cost","Mana Cost is a required field unless the type is Land.");
+			if (! this.requestHas("name") || this.param("name").equals("")) {
+			    errs.put("name","Name is a required field.");
+			}
+			if (! this.requestHas("mana_cost") || this.param("mana_cost").equals("")) {
+			    if (this.requestHas("type_id") && this.param("type_id").equals(Type.Land().getString("type"))) {
+				// ok! If they don't put a mana cost for Land, that is ok.
+			    } else {
+				errs.put("mana_cost","Mana Cost is a required field unless the type is Land.  For no mana cost on nonland cards, use {0}.");
+			    }
+			}
+			if (! this.requestHas("as_values_as_type_node") || this.param("as_values_as_type_node").equals("")) {
+			    errs.put("type_id","Type is a required field.");
+			}
+		    }
+		    if (! this.requestHas("rarity_id") || this.param("rarity_id").equals("")) {
+			errs.put("rarity_id","Rarity is a required field.");
+		    }
+		    if (! this.requestHas("multiverseid") || this.param("multiverseid").equals("")) {
+			errs.put("multiverseid","Multiverseid is a required field.");
+		    }
+		    if (! this.requestHas("expansionset_id") || this.param("expansionset_id").equals("")) {
+			errs.put("expansionset_id","Expansion Set is a required field.");
+		    }
+		    if (! errs.isEmpty()) {
+			throw new RollItBackException();
 		    }
 		}
-		if (! this.requestHas("as_values_as_type_node") || this.param("as_values_as_type_node").equals("")) {
-		    errs.put("type_id","Type is a required field.");
+	    
+		if (bcard == null) {
+		    bcard = new BaseCard();
+		    bcard.set("name", this.param("name"));
+		    bcard.set("rules_text", this.param("rules_text"));
+		    try {
+			bcard.setManaCost(this.param("mana_cost"));
+		    } catch (ManaCostFormatException mcfe) {
+			throw new RollItBackException(mcfe.getMessage());
+		    }
+		    bcard.set("power", this.param("power"));
+		    bcard.set("toughness", this.param("toughness"));
+		    bcard.set("loyalty", this.param("loyalty"));
+		
+		    if (! bcard.save()){
+			errs = bcard.errors();
+			throw new RollItBackException("Something went wrong, please fill out all fields");
+		    } else {
+			// with the base card saved, we need to fill in the dependencies.
+			String[] typeIds = this.param("as_values_as_type_node").split(",");
+			for (int uu = 0; uu < typeIds.length; uu++) {
+			    CardType cardType = new CardType();
+			    cardType.set("basecard_id", bcard.get("id"));
+			    cardType.set("type_id", Integer.parseInt(typeIds[uu]));
+			    cardType.set("position", uu);
+			    if (! cardType.save()) {
+				throw new RollItBackException("Error saving new card's type.");
+			    }
+			}
+		    
+			if (this.requestHas("as_values_as_subtype_node") && ! this.param("as_values_as_subtype_node").equals("")) {
+			    CardSubtype cardSubtype = new CardSubtype();
+			    cardSubtype.set("basecard_id", bcard.get("id"));
+			    cardSubtype.set("subtype_id", this.param("as_values_as_subtype_node")); // REVISIT - this will be multiples!!!  Or maybe with a comma.
+			    cardSubtype.set("position", 0);
+			    if (! cardSubtype.save()) {
+				throw new RollItBackException("Error saving new card's subtype.");
+			    }
+			}
+		    
+			Iterator<Color> it = bcard.colors.iterator();
+			while (it.hasNext()) {
+			    Color tno = it.next();
+			    CardColor cc = new CardColor();
+			    cc.set("basecard_id", bcard.get("id"));
+			    cc.set("color_id", tno.get("id"));
+			    try {
+				cc.save();
+			    } catch (org.javalite.activejdbc.DBException eee) {
+				logError(eee);
+				// That's cool.  I just need to make my colorsetting algo's better.  I wish Color.hasCode() was working like I first thought it might...
+			    }
+			}
+		    }
 		}
-	    }
-	    if (! this.requestHas("rarity_id") || this.param("rarity_id").equals("")) {
-		errs.put("rarity_id","Rarity is a required field.");
-	    }
-	    if (! this.requestHas("multiverseid") || this.param("multiverseid").equals("")) {
-		errs.put("multiverseid","Multiverseid is a required field.");
-	    }
-	    if (! this.requestHas("expansionset_id") || this.param("expansionset_id").equals("")) {
-		errs.put("expansionset_id","Expansion Set is a required field.");
-	    }
-	    if (! errs.isEmpty()) {
+
+		Card card = new Card();
+		card.set("basecard_id", bcard.get("id"));
+		card.set("expansionset_id", this.param("expansionset_id"));
+		card.set("multiverseid", this.param("multiverseid"));
+		card.set("flavor_text", this.param("flavor_text")); // REVISIT - Looks like there may be a character encoding issue here.  I tried an emdash from UTF8 and it looks like it broke somewhere.
+		card.set("rarity", this.param("rarity_id"));
+	    
+		if (! card.save()) {
+		    throw new RollItBackException("Error saving new card's card.");
+		}
+
+		Base.commitTransaction();
+		flash("message", "New card was added: " + bcard.get("name"));
+	    } catch (RollItBackException e) {
+		Base.rollbackTransaction();
 		flash("errors", errs);
 		flash("params", params1st());
+		flash("message", e.getMessage());
 		redirect(CardsController.class, "new_form");
-		return;
 	    }
+	    Base.connection().setAutoCommit(true);
+	} catch(java.sql.SQLException sqle) {
+	    logError(sqle);
 	}
 
-	if (bcard == null) {
-	    bcard = new BaseCard();
-	    bcard.set("name", this.param("name"));
-	    bcard.set("rules_text", this.param("rules_text"));
-	    try {
-		bcard.setManaCost(this.param("mana_cost"));
-	    } catch (ManaCostFormatException mcfe) {
-		flash("message", mcfe.getMessage());
-		flash("params", params1st());
-		redirect(CardsController.class, "new_form");
-		return;
-	    }
-	    bcard.set("power", this.param("power"));
-	    bcard.set("toughness", this.param("toughness"));
-	    bcard.set("loyalty", this.param("loyalty"));
-
-	    if (! bcard.save()){
-		flash("message", "Something went wrong, please fill out all fields");
-		flash("errors", bcard.errors());
-		flash("params", params1st());
-		redirect(CardsController.class, "new_form");
-		return;
-	    } else {
-		// with the base card saved, we need to fill in the dependencies.
-		String[] typeIds = this.param("as_values_as_type_node").split(",");
-		for (int uu = 0; uu < typeIds.length; uu++) {
-		    CardType cardType = new CardType();
-		    cardType.set("basecard_id", bcard.get("id"));
-		    cardType.set("type_id", Integer.parseInt(typeIds[uu]));
-		    cardType.set("position", uu);
-		    if (! cardType.save()) {
-			flash("message", "Error saving new card's type.  Database is probably now in an invalid state for the card you just tried to add.");
-			redirect(CardsController.class, "new_form");
-			// REVISIT - do I need to remove the BaseCard from the database for safety?
-			return;
-		    }
-		}
-
-		if (this.requestHas("as_values_as_subtype_node") && ! this.param("as_values_as_subtype_node").equals("")) {
-		    CardSubtype cardSubtype = new CardSubtype();
-		    cardSubtype.set("basecard_id", bcard.get("id"));
-		    cardSubtype.set("subtype_id", this.param("as_values_as_subtype_node")); // REVISIT - this will be multiples!!!  Or maybe with a comma.
-		    cardSubtype.set("position", 0);
-		    if (! cardSubtype.save()) {
-			flash("message", "Error saving new card's subtype.  Database is probably now in an invalid state for the card you just tried to add.");
-			redirect(CardsController.class, "new_form");
-			// REVISIT - do I need to remove the BaseCard from the database for safety?
-			return;
-		    }
-		}
-
-		Iterator<Color> it = bcard.colors.iterator();
-		while (it.hasNext()) {
-		    Color tno = it.next();
-		    CardColor cc = new CardColor();
-		    cc.set("basecard_id", bcard.get("id"));
-		    cc.set("color_id", tno.get("id"));
-		    try {
-			cc.save();
-		    } catch (org.javalite.activejdbc.DBException eee) {
-			// That's cool.  I just need to make my colorsetting algo's better.  I wish Color.hasCode() was working like I first thought it might...
-		    }
-		}
-	    }
-	}
-
-	Card card = new Card();
-	card.set("basecard_id", bcard.get("id"));
-	card.set("expansionset_id", this.param("expansionset_id"));
-	card.set("multiverseid", this.param("multiverseid"));
-	card.set("flavor_text", this.param("flavor_text")); // REVISIT - Looks like there may be a character encoding issue here.  I tried an emdash from UTF8 and it looks like it broke somewhere.
-	card.set("rarity", this.param("rarity_id"));
-
-	if (! card.save()) {
-	    flash("message", "Error saving new card's card.  Database is probably now in an invalid state for the card you just tried to add. base id " + bcard.get("id"));
-	    redirect(CardsController.class, "new_form");
-	    return;
-	}
-	flash("message", "New card was added: " + bcard.get("name"));
-	redirect(CardsController.class);
+	redirect(CardsController.class, org.javalite.common.Collections.map("action", "show", "id", this.param("multiverseid")));
     }
+
 
     @DELETE
     public void delete(){
