@@ -25,9 +25,9 @@ public class DbConfig extends AbstractDBConfig {
 
     public void init(AppContext context) {
 
-        environment("development").jdbc("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/mtgdb", "mtgdb", "password");
+        environment("development").jdbc("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/mtgdb?characterEncoding=utf-8&useUnicode=true", "mtgdb", "password");
         
-        environment("development").testing().jdbc("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/mtgdb_test", "mtgdb", "password");
+        environment("development").testing().jdbc("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/mtgdb_test?characterEncoding=utf-8&useUnicode=true", "mtgdb", "password");
 
         environment("production").jndi("jdbc/mtgdb_production");
     }

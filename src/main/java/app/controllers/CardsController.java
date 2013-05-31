@@ -33,10 +33,18 @@ import org.javalite.activeweb.freemarker.SelectOption;
 public class CardsController extends AppController {                
 
     public void index(){
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
+
         view("cards", Card.findAll());
     }
 
     public void show(){
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
+
         //this is to protect from URL hacking
         //Card c = (Card) Card.findById(getId());
 	Card c = (Card) Card.first("multiverseid = ?", getId());
@@ -51,6 +59,10 @@ public class CardsController extends AppController {
     
     @POST
     public void getBaseCardByName() {
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
+
 	Gson gson = (Gson)(this.appContext().get("json"));
 	Map map = new HashMap();
 	if (this.requestHas("name")) {
@@ -77,6 +89,9 @@ public class CardsController extends AppController {
      * conditions.  Nor, have I tested violation of unique indices.
      */
     public void create(){
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
 	try {
 	    Base.connection().setAutoCommit(false);
 	    org.javalite.activejdbc.Errors errs = new org.javalite.activejdbc.Errors();
@@ -149,15 +164,17 @@ public class CardsController extends AppController {
 			}
 		    
 			if (this.requestHas("as_values_as_subtype_node") && ! this.param("as_values_as_subtype_node").equals("")) {
-			    CardSubtype cardSubtype = new CardSubtype();
-			    cardSubtype.set("basecard_id", bcard.get("id"));
-			    cardSubtype.set("subtype_id", this.param("as_values_as_subtype_node")); // REVISIT - this will be multiples!!!  Or maybe with a comma.
-			    cardSubtype.set("position", 0);
-			    if (! cardSubtype.save()) {
-				throw new RollItBackException("Error saving new card's subtype.");
+			    String[] subtypeIds = this.param("as_values_as_subtype_node").split(",");
+			    for (int uu = 0; uu < subtypeIds.length; uu++) {
+				CardSubtype cardSubtype = new CardSubtype();
+				cardSubtype.set("basecard_id", bcard.get("id"));
+				cardSubtype.set("subtype_id", Integer.parseInt(subtypeIds[uu]));
+				cardSubtype.set("position", uu);
+				if (! cardSubtype.save()) {
+				    throw new RollItBackException("Error saving new card's subtype.");
+				}
 			    }
 			}
-		    
 			Iterator<Color> it = bcard.colors.iterator();
 			while (it.hasNext()) {
 			    Color tno = it.next();
@@ -187,6 +204,14 @@ public class CardsController extends AppController {
 
 		Base.commitTransaction();
 		flash("message", "New card was added: " + bcard.get("name"));
+/*	    } catch (java.sql.SQLException e) {
+		logError(e);
+		Base.rollbackTransaction();
+		flash("errors", errs);
+		flash("params", params1st());
+		flash("message", e.getMessage());
+		redirect(CardsController.class, "new_form");
+*/
 	    } catch (RollItBackException e) {
 		Base.rollbackTransaction();
 		flash("errors", errs);
@@ -205,6 +230,9 @@ public class CardsController extends AppController {
 
     @DELETE
     public void delete(){
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
 
         Card b = (Card)Card.findById(getId());
         String name = b.getString("name");
@@ -234,6 +262,10 @@ public class CardsController extends AppController {
 
     @POST
     public void nameLookup() {
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
+
 	int limit = 15;
 	try {
 	    limit = Integer.parseInt(this.param("limit"));
@@ -257,6 +289,10 @@ public class CardsController extends AppController {
     }
 
     public void newForm() {
+	//setRequestEncoding("UTF-8");
+	//setResponseEncoding("UTF-8");
+	setEncoding("UTF-8");
+
 	Map fParams = getFParams();
         view("expansionsets", ExpansionSet.findAll());
         view("rarities", Rarity.findAll());
