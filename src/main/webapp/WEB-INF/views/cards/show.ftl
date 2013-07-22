@@ -11,7 +11,7 @@
 <p><strong>Color(s):</strong> <#list card.basecard.colors as ccc>${ccc.color} </#list></p>
 <p><strong>Type:</strong> <#list card.basecard.types as ttt>${ttt.type} </#list></p>
 <p><strong>Subtype:</strong> <#list card.basecard.subtypes as sss>${sss.subtype} </#list></p>
-<p><strong>Rules:</strong> ${card.basecard.rules_text}</p>
+<p><strong>Rules:</strong> ${card.basecard.rules_text!""}</p>
 <p><strong>Flavor:</strong> ${card.flavor_text!""}</p>
 <p><strong>Expansion Set:</strong> ${card.expansionset.name}</p>
 <p><strong>Mana Cost:</strong> ${card.basecard.mana_cost}</p>

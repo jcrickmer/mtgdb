@@ -18,7 +18,7 @@
             <@link_to action="show" id=card.multiverseid>${card.basecard.name}</@link_to>
         </td>
         <td>
-            ${card.basecard.rules_text}
+            ${card.basecard.rules_text!""}
         </td>
     </tr>
 </#list>
