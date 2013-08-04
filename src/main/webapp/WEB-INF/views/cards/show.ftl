@@ -14,6 +14,7 @@
 <p><strong>Rules:</strong> ${card.basecard.rules_text!""}</p>
 <p><strong>Flavor:</strong> ${card.flavor_text!""}</p>
 <p><strong>Expansion Set:</strong> ${card.expansionset.name}</p>
+<p><strong>Card Number:</strong> ${card.card_number!""}</p>
 <p><strong>Mana Cost:</strong> ${card.basecard.mana_cost}</p>
 <p><strong>CMC:</strong> ${card.basecard.cmc}</p>
 <p><strong>Power:</strong> ${card.basecard.power!""}</p>

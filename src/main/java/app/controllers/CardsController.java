@@ -1,6 +1,7 @@
 package app.controllers;
 
 import org.javalite.activejdbc.Base;
+import org.javalite.activejdbc.Paginator;
 import org.javalite.activeweb.AppController;
 import org.javalite.activeweb.annotations.DELETE;
 import org.javalite.activeweb.annotations.GET;
@@ -32,12 +33,30 @@ import org.javalite.activeweb.freemarker.SelectOption;
  */
 public class CardsController extends AppController {                
 
-    public void index(){
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
+	public void index(){
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
 
-        view("cards", Card.findAll());
+		Paginator p = new Paginator(Card.class, 20, "multiverseid > ?", new Integer(0)).orderBy("multiverseid ASC");
+
+		String curPage_s = this.param("curPage");
+		long curPage = 1;
+		long totalPages = p.pageCount();
+		try {
+			curPage = Long.parseLong(curPage_s);
+		} catch (Exception eee) {
+			// they gave us a bad number.  1 it is!
+		}
+		if (curPage < 1) {
+			curPage = 1;
+		}
+		if (curPage > totalPages) {
+			curPage = totalPages;
+		}
+		view("currentPage", curPage);
+		view("totalPages", totalPages);
+		view("cards", p.getPage((int)curPage));
     }
 
     public void show(){
