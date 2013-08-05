@@ -1,4 +1,4 @@
 <div class="header">
-  <h1><a href="${context_path}">MTG DB</a></h1>
+  <h1><a href="${context_path}">Jason's Magic Database</a></h1>
 </div>
 

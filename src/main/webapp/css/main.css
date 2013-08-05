@@ -1,11 +1,11 @@
 @charset "UTF-8";
 /* CSS Document */
-
+/*
 *{
 	margin:0;
 	padding:0;
 }
-
+*/
 html, body{
 	background:white;
 }
@@ -25,21 +25,19 @@ a:hover{
 
 p{
 	margin:10px 0;
-	line-height:16px;
+	line-height:1.1em;
 }
 
 
 .header{
-    background-color:#fafad2;
-    padding:20px;
+    background-color:#fafafa;
 }
 
 .main{
-    padding:20px
+  margin: 20px;
 }
 
 .content{
-    padding:20px;
 }
 
 .error{
@@ -62,8 +60,10 @@ p{
 }
 
 .footer{
-    background-color:#fafad2;
-    padding:20px;
+  margin-top: 60px;
+  color: #383838;
+  font-size: 8pt;
+  background-color:#fafafa;
 }
 
 
@@ -73,3 +73,22 @@ table tr td{
     padding:10px;
 }
 
+/* card display */
+div.card_image_display {
+  float: left;
+}
+div.card_info_display {
+  margin-left: 280px;
+}
+div.card_info_line {
+  clear:right;
+  display:block;
+  height: 26px;
+}
+span.card_info_title {
+  float: left;
+  width: 180px;
+  font-weight: bold;
+}
+span.card_info_value {
+}

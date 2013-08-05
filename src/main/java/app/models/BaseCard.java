@@ -6,6 +6,9 @@ import org.javalite.activejdbc.annotations.Many2Many;
 
 import us.newplatyp.mtg.Symbols;
 import app.util.BaseCardValidator;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -18,6 +21,48 @@ public class BaseCard extends Model {
 
     static {
 	//validateWith(new BaseCardValidator<BaseCard>());
+    }
+
+    private List<String> oTypes = null;
+
+    public List orderedTypes() {
+	if (this.oTypes == null) {
+	    this.oTypes = new ArrayList();
+
+	    List<CardType> cts = this.getAll(CardType.class);
+	    Iterator ctsIt = cts.iterator();
+	    while (ctsIt.hasNext()) {
+		CardType ct = (CardType)ctsIt.next();
+		int pos = ct.getInteger("position").intValue();
+		while (this.oTypes.size() < pos + 1) {
+		    this.oTypes.add(null);
+		}
+		Type tt = (Type)ct.get("type");
+		this.oTypes.set(pos, tt.getString("type"));
+	    }
+	}
+	return this.oTypes;
+    }
+
+    private List<String> oStypes = null;
+
+    public List orderedSubtypes() {
+	if (this.oStypes == null) {
+	    this.oStypes = new ArrayList();
+
+	    List<CardSubtype> cts = this.getAll(CardSubtype.class);
+	    Iterator ctsIt = cts.iterator();
+	    while (ctsIt.hasNext()) {
+		CardSubtype ct = (CardSubtype)ctsIt.next();
+		int pos = ct.getInteger("position").intValue();
+		while (this.oStypes.size() < pos + 1) {
+		    this.oStypes.add(null);
+		}
+		Subtype tt = (Subtype)ct.get("subtype");
+		this.oStypes.set(pos, tt.getString("subtype"));
+	    }
+	}
+	return this.oStypes;
     }
 
     protected void beforeValidation() {
