@@ -33,20 +33,33 @@ import org.javalite.activeweb.freemarker.SelectOption;
  */
 public class CardsController extends AppController {                
 
-	public void index(){
+	public void index() {
+		list();
+	}
+
+	public void list() {
+		Paginator p = new Paginator(Card.class, 20, "multiverseid > ?", new Integer(0)).orderBy("multiverseid ASC");
+		session("currentSearch", p);
+		displaySearchResults();
+    }
+
+	public void displaySearchResults() { // we will read Paginator off of the session
 		//setRequestEncoding("UTF-8");
 		//setResponseEncoding("UTF-8");
 		setEncoding("UTF-8");
 
-		Paginator p = new Paginator(Card.class, 20, "multiverseid > ?", new Integer(0)).orderBy("multiverseid ASC");
+		Paginator paginator = (Paginator) session("currentSearch"); // REVISIT - this thing could be null in some weird future scenario
 
 		String curPage_s = this.param("curPage");
 		long curPage = 1;
-		long totalPages = p.pageCount();
+		long totalPages = paginator.pageCount();
 		try {
 			curPage = Long.parseLong(curPage_s);
 		} catch (Exception eee) {
-			// they gave us a bad number.  1 it is!
+			// they gave us a bad number.  Use what the session says, or 1.
+			if (this.session("currentPage") != null) {
+				curPage = ((Long)this.session("currentPage")).longValue();
+			}
 		}
 		if (curPage < 1) {
 			curPage = 1;
@@ -54,20 +67,23 @@ public class CardsController extends AppController {
 		if (curPage > totalPages) {
 			curPage = totalPages;
 		}
+
+		this.session("currentPage", new Long(curPage));
 		view("currentPage", curPage);
 		view("totalPages", totalPages);
-		view("cards", p.getPage((int)curPage));
-    }
+		view("cards", paginator.getPage((int)curPage));
+		render("list");
+	}
 
     public void show(){
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
 
         //this is to protect from URL hacking
         //Card c = (Card) Card.findById(getId());
-	Card c = (Card) Card.first("multiverseid = ?", getId());
-	//BaseCard bc = (BaseCard) c.parent(BaseCard.class);
+		Card c = (Card) Card.first("multiverseid = ?", getId());
+		//BaseCard bc = (BaseCard) c.parent(BaseCard.class);
         if(c != null){
             view("card", c);
         }else{
@@ -77,27 +93,28 @@ public class CardsController extends AppController {
     }
     
     @POST
-    public void getBaseCardByName() {
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
-
-	Gson gson = (Gson)(this.appContext().get("json"));
-	Map map = new HashMap();
-	if (this.requestHas("name")) {
-	    BaseCard bc = (BaseCard) BaseCard.first("name = ?", this.param("name"));
-	    map.put("BaseCard", bc);
-	}
-	respond(gson.toJson(map)).contentType("application/json").status(200);
+	public void getBaseCardByName() {
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
+		
+		Gson gson = (Gson)(this.appContext().get("json"));
+		Map map = new HashMap();
+		if (this.requestHas("name")) {
+			BaseCard bc = (BaseCard) BaseCard.first("name = ?", this.param("name"));
+			map.put("BaseCard", bc);
+		}
+		respond(gson.toJson(map)).contentType("application/json").status(200);
     }
-
+	
     private class RollItBackException extends Exception {
-	RollItBackException() {
-	    super();
-	}
-	RollItBackException(String msg) {
-	    super(msg);
-	}
+		RollItBackException() {
+			super();
+		}
+
+		RollItBackException(String msg) {
+			super(msg);
+		}
     }
 
     @POST
@@ -108,89 +125,89 @@ public class CardsController extends AppController {
      * conditions.  Nor, have I tested violation of unique indices.
      */
     public void create(){
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
-	try {
-	    Base.connection().setAutoCommit(false);
-	    org.javalite.activejdbc.Errors errs = new org.javalite.activejdbc.Errors();
-	    try {
-		BaseCard bcard = null;
-		// let's check the "must have" fields.  We are goign to do tis here rather than in the model controllers because we are building an aggregate.
-		{
-		    if (this.requestHas("basecard_id") && ! this.param("basecard_id").equals("")) {
-			// we are building from an existing base card!!!  Woot!
-			bcard = BaseCard.findById(new Integer(this.param("basecard_id")));
-			if (bcard == null) {
-			    errs.put("message","Well, this is a problem.  It looks like you specified a card as the base card, but I don't know what card that is.");
-			}
-		    } else {
-			if (! this.requestHas("name") || this.param("name").equals("")) {
-			    errs.put("name","Name is a required field.");
-			}
-			if (! this.requestHas("mana_cost") || this.param("mana_cost").equals("")) {
-			    if (this.requestHas("type_id") && this.param("type_id").equals(Type.Land().getString("type"))) {
-				// ok! If they don't put a mana cost for Land, that is ok.
-			    } else {
-				errs.put("mana_cost","Mana Cost is a required field unless the type is Land.  For no mana cost on nonland cards, use {0}.");
-			    }
-			}
-			if (! this.requestHas("as_values_as_type_node") || this.param("as_values_as_type_node").equals("")) {
-			    errs.put("type_id","Type is a required field.");
-			}
-		    }
-		    if (! this.requestHas("rarity_id") || this.param("rarity_id").equals("")) {
-			errs.put("rarity_id","Rarity is a required field.");
-		    }
-		    if (! this.requestHas("multiverseid") || this.param("multiverseid").equals("")) {
-			errs.put("multiverseid","Multiverseid is a required field.");
-		    }
-		    if (! this.requestHas("expansionset_id") || this.param("expansionset_id").equals("")) {
-			errs.put("expansionset_id","Expansion Set is a required field.");
-		    }
-		    if (! errs.isEmpty()) {
-			throw new RollItBackException();
-		    }
-		}
-	    
-		if (bcard == null) {
-		    bcard = new BaseCard();
-		    bcard.set("name", this.param("name"));
-		    bcard.set("rules_text", this.param("rules_text"));
-		    try {
-			bcard.setManaCost(this.param("mana_cost"));
-		    } catch (ManaCostFormatException mcfe) {
-			throw new RollItBackException(mcfe.getMessage());
-		    }
-		    bcard.set("power", this.param("power"));
-		    bcard.set("toughness", this.param("toughness"));
-		    bcard.set("loyalty", this.param("loyalty"));
-		
-		    if (! bcard.save()){
-			errs = bcard.errors();
-			throw new RollItBackException("Something went wrong, please fill out all fields");
-		    } else {
-			// with the base card saved, we need to fill in the dependencies.
-			String[] typeIds = this.param("as_values_as_type_node").split(",");
-			for (int uu = 0; uu < typeIds.length; uu++) {
-			    CardType cardType = new CardType();
-			    cardType.set("basecard_id", bcard.get("id"));
-			    cardType.set("type_id", Integer.parseInt(typeIds[uu]));
-			    cardType.set("position", uu);
-			    if (! cardType.save()) {
-				throw new RollItBackException("Error saving new card's type.");
-			    }
-			}
-		    
-			if (this.requestHas("as_values_as_subtype_node") && ! this.param("as_values_as_subtype_node").equals("")) {
-			    String[] subtypeIds = this.param("as_values_as_subtype_node").split(",");
-			    for (int uu = 0; uu < subtypeIds.length; uu++) {
-				CardSubtype cardSubtype = new CardSubtype();
-				cardSubtype.set("basecard_id", bcard.get("id"));
-				cardSubtype.set("subtype_id", Integer.parseInt(subtypeIds[uu]));
-				cardSubtype.set("position", uu);
-				if (! cardSubtype.save()) {
-				    throw new RollItBackException("Error saving new card's subtype.");
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
+		try {
+			Base.connection().setAutoCommit(false);
+			org.javalite.activejdbc.Errors errs = new org.javalite.activejdbc.Errors();
+			try {
+				BaseCard bcard = null;
+				// let's check the "must have" fields.  We are goign to do tis here rather than in the model controllers because we are building an aggregate.
+				{
+					if (this.requestHas("basecard_id") && ! this.param("basecard_id").equals("")) {
+						// we are building from an existing base card!!!  Woot!
+						bcard = BaseCard.findById(new Integer(this.param("basecard_id")));
+						if (bcard == null) {
+							errs.put("message","Well, this is a problem.  It looks like you specified a card as the base card, but I don't know what card that is.");
+						}
+					} else {
+						if (! this.requestHas("name") || this.param("name").equals("")) {
+							errs.put("name","Name is a required field.");
+						}
+						if (! this.requestHas("mana_cost") || this.param("mana_cost").equals("")) {
+							if (this.requestHas("type_id") && this.param("type_id").equals(Type.Land().getString("type"))) {
+								// ok! If they don't put a mana cost for Land, that is ok.
+							} else {
+								errs.put("mana_cost","Mana Cost is a required field unless the type is Land.  For no mana cost on nonland cards, use {0}.");
+							}
+						}
+						if (! this.requestHas("as_values_as_type_node") || this.param("as_values_as_type_node").equals("")) {
+							errs.put("type_id","Type is a required field.");
+						}
+					}
+					if (! this.requestHas("rarity_id") || this.param("rarity_id").equals("")) {
+						errs.put("rarity_id","Rarity is a required field.");
+					}
+					if (! this.requestHas("multiverseid") || this.param("multiverseid").equals("")) {
+						errs.put("multiverseid","Multiverseid is a required field.");
+					}
+					if (! this.requestHas("expansionset_id") || this.param("expansionset_id").equals("")) {
+						errs.put("expansionset_id","Expansion Set is a required field.");
+					}
+					if (! errs.isEmpty()) {
+						throw new RollItBackException();
+					}
+				}
+				
+				if (bcard == null) {
+					bcard = new BaseCard();
+					bcard.set("name", this.param("name"));
+					bcard.set("rules_text", this.param("rules_text"));
+					try {
+						bcard.setManaCost(this.param("mana_cost"));
+					} catch (ManaCostFormatException mcfe) {
+						throw new RollItBackException(mcfe.getMessage());
+					}
+					bcard.set("power", this.param("power"));
+					bcard.set("toughness", this.param("toughness"));
+					bcard.set("loyalty", this.param("loyalty"));
+					
+					if (! bcard.save()){
+						errs = bcard.errors();
+						throw new RollItBackException("Something went wrong, please fill out all fields");
+					} else {
+						// with the base card saved, we need to fill in the dependencies.
+						String[] typeIds = this.param("as_values_as_type_node").split(",");
+						for (int uu = 0; uu < typeIds.length; uu++) {
+							CardType cardType = new CardType();
+							cardType.set("basecard_id", bcard.get("id"));
+							cardType.set("type_id", Integer.parseInt(typeIds[uu]));
+							cardType.set("position", uu);
+							if (! cardType.save()) {
+								throw new RollItBackException("Error saving new card's type.");
+							}
+						}
+						
+						if (this.requestHas("as_values_as_subtype_node") && ! this.param("as_values_as_subtype_node").equals("")) {
+							String[] subtypeIds = this.param("as_values_as_subtype_node").split(",");
+							for (int uu = 0; uu < subtypeIds.length; uu++) {
+								CardSubtype cardSubtype = new CardSubtype();
+								cardSubtype.set("basecard_id", bcard.get("id"));
+								cardSubtype.set("subtype_id", Integer.parseInt(subtypeIds[uu]));
+								cardSubtype.set("position", uu);
+								if (! cardSubtype.save()) {
+									throw new RollItBackException("Error saving new card's subtype.");
 				}
 			    }
 			}
@@ -249,9 +266,9 @@ public class CardsController extends AppController {
 
     @DELETE
     public void delete(){
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
 
         Card b = (Card)Card.findById(getId());
         String name = b.getString("name");
@@ -264,80 +281,137 @@ public class CardsController extends AppController {
      * Convience method to get the "params" value out of Flasher.
      */
     Map getFParams() {
-	Map result = null;
-	Object flashMap = (Map) session().get("flasher");
-	if (flashMap != null && flashMap instanceof Map) {
-	    Object obj = ((Map) flashMap).get("params");
-	    if (obj != null && obj instanceof Map) {
-		result = (Map)obj;
-	    }
-	}
-	if (result == null) {
-	    result = new HashMap();
-	}
-	return result;
+		Map result = null;
+		Object flashMap = (Map) session().get("flasher");
+		if (flashMap != null && flashMap instanceof Map) {
+			Object obj = ((Map) flashMap).get("params");
+			if (obj != null && obj instanceof Map) {
+				result = (Map)obj;
+			}
+		}
+		if (result == null) {
+			result = new HashMap();
+		}
+		return result;
     }
 
 
     @POST
     public void nameLookup() {
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
 
-	int limit = 15;
-	try {
-	    limit = Integer.parseInt(this.param("limit"));
-	} catch (Exception e) { }
+		int limit = 15;
+		try {
+			limit = Integer.parseInt(this.param("limit"));
+		} catch (Exception e) { }
 
-	ArrayList<String> vals = new ArrayList();
-	if (this.requestHas("namePartial")) {
-	    List<BaseCard> cards = BaseCard.where("LOWER(name) LIKE ?", this.param("namePartial").toLowerCase() + "%") // ASSUMPTION - the ActiveJDBC where function will SQL-escape the data.
-		.limit(15)
-		.orderBy("name ASC");
-	    Iterator<BaseCard> it = cards.iterator();
-	    while (it.hasNext()) {
-		BaseCard bc = it.next();
-		vals.add(bc.getString("name"));
-	    }
-	}
-	Gson gson = (Gson) (this.appContext().get("json"));
-	Map map = new HashMap();
-	map.put("terms", vals);
-	respond(gson.toJson(map)).contentType("application/json").status(200);
+		ArrayList<String> vals = new ArrayList();
+		if (this.requestHas("namePartial")) {
+			List<BaseCard> cards = BaseCard.where("LOWER(name) LIKE ?", this.param("namePartial").toLowerCase() + "%") // ASSUMPTION - the ActiveJDBC where function will SQL-escape the data.
+				.limit(15)
+				.orderBy("name ASC");
+			Iterator<BaseCard> it = cards.iterator();
+			while (it.hasNext()) {
+				BaseCard bc = it.next();
+				vals.add(bc.getString("name"));
+			}
+		}
+		Gson gson = (Gson) (this.appContext().get("json"));
+		Map map = new HashMap();
+		map.put("terms", vals);
+		respond(gson.toJson(map)).contentType("application/json").status(200);
     }
 
-    public void newForm() {
-	//setRequestEncoding("UTF-8");
-	//setResponseEncoding("UTF-8");
-	setEncoding("UTF-8");
 
-	Map fParams = getFParams();
+    @POST
+	public void search() {
+		setEncoding("UTF-8");
+		
+		// reset the current page of the results to be 1.
+		this.session("currentPage", new Long(1));
+
+		Paginator p;
+
+		if (this.requestHas("name") && ! this.param("name").equals("")) {
+			// look by name!
+			List idsList = Base.firstColumn("SELECT id FROM basecards WHERE name LIKE ?", "%" +  this.param("name") + "%");
+			StringBuffer like = new StringBuffer();
+			Iterator lit = idsList.iterator();
+			while (lit.hasNext()) {
+				Object foo = lit.next();
+				like.append(foo.toString());
+				if (lit.hasNext()) {
+					like.append(",");
+				}
+			}
+			p = new Paginator(Card.class, 20, "basecard_id IN (" + like.toString() + ")").orderBy("multiverseid ASC");
+		} else {
+			p = new Paginator(Card.class, 20, "multiverseid > ?", new Integer(0)).orderBy("multiverseid ASC");
+		}
+		session("currentSearch", p);
+		displaySearchResults();
+    }
+
+    public void searchForm() {
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
+
+		Map fParams = getFParams();
         view("expansionsets", ExpansionSet.findAll());
         view("rarities", Rarity.findAll());
         view("colors", Color.findAll());
 
-	List<Type> types = Type.findAll();
+		List<Type> types = Type.findAll();
         view("types", types);
-	List<SelectOption> typesList = new ArrayList();
-	Iterator<Type> it = types.iterator();
-	while (it.hasNext()) {
-	    Type cType = it.next();
-	    int cTypeId = cType.getInteger("id").intValue();
-	    SelectOption so = new SelectOption(cTypeId, cType.getString("type"));
-	    //logError("param is " + fParams.get("type_id"));
-	    so.setSelected(fParams.get("type_id") != null && fParams.get("type_id").equals("" + cTypeId));
-	    typesList.add(so);
-	}
-	view("typesList", typesList);
-
+		List<SelectOption> typesList = new ArrayList();
+		Iterator<Type> it = types.iterator();
+		while (it.hasNext()) {
+			Type cType = it.next();
+			int cTypeId = cType.getInteger("id").intValue();
+			SelectOption so = new SelectOption(cTypeId, cType.getString("type"));
+			//logError("param is " + fParams.get("type_id"));
+			so.setSelected(fParams.get("type_id") != null && fParams.get("type_id").equals("" + cTypeId));
+			typesList.add(so);
+		}
+		view("typesList", typesList);
+		
         view("subtypes", Subtype.findAll());
-	/* andy piece ofcode to see what is the in context.  I have not had much luck finding debug tools for Freemarker
-	Map<String,Object> bbb = values();
-	Iterator<String> cit = bbb.keySet().iterator();
-	while (cit.hasNext()) {
-	    logError("context: " + cit.next());
+    }
+
+    public void newForm() {
+		//setRequestEncoding("UTF-8");
+		//setResponseEncoding("UTF-8");
+		setEncoding("UTF-8");
+		
+		Map fParams = getFParams();
+        view("expansionsets", ExpansionSet.findAll());
+        view("rarities", Rarity.findAll());
+        view("colors", Color.findAll());
+		
+		List<Type> types = Type.findAll();
+        view("types", types);
+		List<SelectOption> typesList = new ArrayList();
+		Iterator<Type> it = types.iterator();
+		while (it.hasNext()) {
+			Type cType = it.next();
+			int cTypeId = cType.getInteger("id").intValue();
+			SelectOption so = new SelectOption(cTypeId, cType.getString("type"));
+			//logError("param is " + fParams.get("type_id"));
+			so.setSelected(fParams.get("type_id") != null && fParams.get("type_id").equals("" + cTypeId));
+			typesList.add(so);
+		}
+		view("typesList", typesList);
+		
+        view("subtypes", Subtype.findAll());
+		/* andy piece ofcode to see what is the in context.  I have not had much luck finding debug tools for Freemarker
+		   Map<String,Object> bbb = values();
+		   Iterator<String> cit = bbb.keySet().iterator();
+		   while (cit.hasNext()) {
+		   logError("context: " + cit.next());
 	}
-	*/
+		*/
     }
 }

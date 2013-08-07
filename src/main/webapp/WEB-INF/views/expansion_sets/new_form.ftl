@@ -13,6 +13,12 @@
             </td>
         </tr>
         <tr>
+            <td>Abbreviation</td>
+            <td><input type="text" name="abbr" value="${(flasher.params.abbr)!}"> *
+                            <span class="error">${(flasher.errors.abbr)!}</span>
+            </td>
+        </tr>
+        <tr>
             <td></td>
             <td><@link_to>Cancel</@link_to> | <input type="submit" value="Add new expansion set"></td>
         </tr>

@@ -14,17 +14,17 @@
         <#assign interval = (p-2)..(p+2)>
     </#if>
     <#if !(interval?seq_contains(1))>
-     <a href="cards?curPage=1">1</a> ... <#rt>
+     <@link_to controller="cards" action="list" query_string="curPage=1">1</@link_to> ... <#rt>
     </#if>
     <#list interval as page>
         <#if page=p>
          <${page}> <#t>
         <#else>
-         <a href="cards?curPage=${page}">${page}</a> <#t>
+         <@link_to controller="cards" action="list" query_string="curPage=${page}">${page}</@link_to> <#t>
         </#if>
     </#list>
     <#if !(interval?seq_contains(size))>
-     ... <a href="cards?curPage=${size}">${size}</a><#lt>
+     ... <@link_to controller="cards" action="list" query_string="curPage=${size}">${size}</@link_to><#lt>
     </#if>
 </#macro>
 
@@ -35,6 +35,7 @@
 
 
 
+<@link_to action="search_form">Search cards</@link_to>
 <@link_to action="new_form">Add new card</@link_to>
 
 <div><@pages 1..totalPages currentPage /></div>

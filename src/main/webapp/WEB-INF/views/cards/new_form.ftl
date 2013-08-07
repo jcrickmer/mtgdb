@@ -202,7 +202,11 @@ $("#as_type").autoSuggest(typesData.items, {asHtmlID: "as_type_node", selectedIt
 <span id="as_subtype_hard"></span>
 <input type="text" id="as_subtype" name="as_subtype_id">
 <script type="text/javascript">
-$("#as_subtype").autoSuggest(subtypesData.items, {asHtmlID: "as_subtype_node", selectedItemProp: "name", searchObjProps: "name"});
+function subtypeSelectionAdded(elem) {
+console.log("So you want to add a new subtype, eh?");
+console.dir(elem);
+}
+$("#as_subtype").autoSuggest(subtypesData.items, {asHtmlID: "as_subtype_node", selectedItemProp: "name", searchObjProps: "name", selectionAdded: subtypeSelectionAdded});
 </script>
           <span class="error">${(flasher.errors.subtype_id)!}</span>
         </td>

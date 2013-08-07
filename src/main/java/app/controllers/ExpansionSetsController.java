@@ -29,8 +29,8 @@ public class ExpansionSetsController extends AppController {
     public void create(){
         ExpansionSet expansionset = new ExpansionSet();
         expansionset.fromMap(params1st());
-        if(!expansionset.save()){
-            flash("message", "Something went wrong, please  fill out all fields");
+	if (!expansionset.save()) {
+            flash("message", "Something went wrong, please fill out all fields");
             flash("errors", expansionset.errors());
             flash("params", params1st());
             redirect(ExpansionSetsController.class, "new_form");

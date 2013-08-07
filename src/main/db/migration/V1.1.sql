@@ -56,3 +56,5 @@ UPDATE expansionsets SET abbr = 'VIS' WHERE name = 'Visions';
 UPDATE expansionsets SET abbr = 'WTH' WHERE name = 'Weatherlight';
 UPDATE expansionsets SET abbr = 'WWK' WHERE name = 'Worldwake';
 UPDATE expansionsets SET abbr = 'ZEN' WHERE name = 'Zendikar';
+ALTER TABLE expansionsets MODIFY abbr CHAR(6) NOT NULL;
+ALTER TABLE expansionsets ADD UNIQUE (abbr);

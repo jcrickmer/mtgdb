@@ -37,6 +37,9 @@ p{
   margin: 20px;
 }
 
+ul {
+  margin-left: 30px;
+}
 .content{
 }
 
@@ -85,10 +88,10 @@ div.card_info_line {
   display:block;
   height: 26px;
 }
-span.card_info_title {
+div.card_info_title {
   float: left;
   width: 180px;
   font-weight: bold;
 }
-span.card_info_value {
+div.card_info_value {
 }
