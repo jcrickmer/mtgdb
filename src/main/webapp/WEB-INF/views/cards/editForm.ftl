@@ -1,4 +1,4 @@
-<@content for="title">Add new card</@content>
+<@content for="title">Edit Card - ${card.basecard.name}</@content>
 <script type="text/javascript"> 
 $("<link/>", {
    rel: "stylesheet",
@@ -13,19 +13,16 @@ $("<link/>", {
 </script>
 <script type="text/javascript" src="${context_path}/js/autosuggest/jquery.autoSuggest.js"></script>
 <span class="error_message"><@flash name="message"/></span>
-<h2>Adding new card</h2>
+<h2>Edit Card - ${card.basecard.name}</h2>
 
-
-<@form action="create" method="post">
-  <div id="basecard_input">
+<@form action="editCard" method="post">
+  <input type="hidden" name="multiverseid" value="${card.multiverseid!}" />
+  <div id="basecard">
     <table style="margin:30px">
       <tr>
         <td>Name</td>
         <td>
-          <input type="text" id="basecard_id" name="basecard_id" value="">
-          <input type="text" id="name_field" name="name" value="${(flasher.params.name)!}">
-          *
-          <span class="error">${(flasher.errors.name)!}</span>
+          ${card.basecard.name}
           <script type="text/javascript">
 var typesData = {items: [
 <#list types as type>
@@ -161,75 +158,56 @@ $("#name_field").autocomplete({ delay: 500, minLength: 3, source: nameLookupCB, 
       <tr>
         <td>Rules Text</td>
         <td>
-          <textarea id="rules_text" name="rules_text">${(flasher.params.rules_text)!}</textarea>
-          <span class="error">${(flasher.errors.rules_text)!}</span>
+          ${card.basecard.rules_text!""}
         </td>
       </tr>
       <tr>
         <td>Mana Cost</td>
         <td>
-          <span id="mana_cost"></span><input type="text" id="mana_cost_f" name="mana_cost" value="${(flasher.params.mana_cost)!}">
-          <span id="mana_cost_fr">*</span>
-          <span class="error">${(flasher.errors.mana_cost)!}</span>
+          ${card.basecard.mana_cost}
         </td>
       </tr>
       <tr>
         <td>Converted Mana Cost</td>
         <td>
-          <span id="cmc"><i>to be calculated</i></span>
+          ${card.basecard.cmc}
         </td>
       </tr>
       <tr>
         <td>Color</td>
         <td>
-          <span id="color"><i>to be calculated</i></span>
+          <#list card.basecard.colors as ccc>${ccc.color} </#list>
         </td>
       </tr>
       <tr>
         <td>Type</td>
         <td>
-<span id="as_type_hard"></span>
-<input type="text" id="as_type" name="as_type_id">
-<script type="text/javascript">
-$("#as_type").autoSuggest(typesData.items, {asHtmlID: "as_type_node", selectedItemProp: "name", searchObjProps: "name"});
-</script>
-          <span class="error">${(flasher.errors.type_id)!}</span>
-        </td>
+          <#list card.basecard.orderedTypes() as ttt>${ttt} </#list>
       </tr>
       <tr>
         <td>Subtype</td>
         <td>
-<span id="as_subtype_hard"></span>
-<input type="text" id="as_subtype" name="as_subtype_id">
-<script type="text/javascript">
-function subtypeSelectionAdded(elem) {
-console.log("So you want to add a new subtype, eh?");
-console.dir(elem);
-}
-$("#as_subtype").autoSuggest(subtypesData.items, {asHtmlID: "as_subtype_node", selectedItemProp: "name", searchObjProps: "name", selectionAdded: subtypeSelectionAdded});
-</script>
-          <span class="error">${(flasher.errors.subtype_id)!}</span>
+          <#if (card.basecard.orderedSubtypes()?size > 0)>
+            <#list card.basecard.orderedSubtypes() as sss>${sss} </#list>
+          </#if>
         </td>
       </tr>
       <tr>
         <td>Power</td>
         <td>
-          <input type="text" id="power" name="power" value="${(flasher.params.power)!}">
-          <span class="error">${(flasher.errors.power)!}</span>
+          ${card.basecard.power!""}
         </td>
       </tr>
       <tr>
         <td>Toughness</td>
         <td>
-          <input type="text" id="toughness" name="toughness" value="${(flasher.params.toughness)!}">
-          <span class="error">${(flasher.errors.toughness)!}</span>
+          ${card.basecard.toughness!""}
         </td>
       </tr>
       <tr>
         <td>Loyalty</td>
         <td>
-          <input type="text" id="loyalty" name="loyalty" value="${(flasher.params.loyalty)!}">
-          <span class="error">${(flasher.errors.loyalty)!}</span>
+          ${card.basecard.loyalty!""}
         </td>
       </tr>
     </table>
@@ -238,36 +216,42 @@ $("#as_subtype").autoSuggest(subtypesData.items, {asHtmlID: "as_subtype_node", s
     <table style="margin:30px">
       <tr>
         <td>Multiverse Id</td>
-        <td><input type="text" name="multiverseid" value="${(flasher.params.multiverseid)!}"> *
+        <td><input type="text" name="multiverseid_changed" value="${card.multiverseid!}"> *
                             <span class="error">${(flasher.errors.multiverseid)!}</span>
         </td>
       </tr>
       <tr>
         <td>Expansion Set</td>
         <td>
-          <select name="expansionset_id">
+          <select name="expansionset_id" id="expansionset_id">
             <#list expansionsets as expset>
               <option value="${expset.id}">${expset.name}</option>
             </#list>
           </select>
+          <script>
+$("#expansionset_id").val("${card.expansionset_id!""}");
+          </script>
           *
           <span class="error">${(flasher.errors.expansionset_id)!}</span>
         </td>
       </tr>
       <tr>
         <td>Card Number</td>
-        <td><input type="text" name="card_number" value="${(flasher.params.card_number)!}"> *
+        <td><input type="text" name="card_number" value="${card.card_number!}"> *
                             <span class="error">${(flasher.errors.card_number)!}</span>
         </td>
       </tr>
       <tr>
         <td>Rarity</td>
         <td>
-          <select name="rarity_id">
+          <select id="rarity_id" name="rarity_id">
             <#list rarities as rarity>
               <option value="${rarity.id}">${rarity.rarity}</option>
             </#list>
           </select>
+          <script>
+$("#rarity_id").val("${card.rarity}");
+          </script>
           *
           <span class="error">${(flasher.errors.rarity_id)!}</span>
         </td>
@@ -275,7 +259,7 @@ $("#as_subtype").autoSuggest(subtypesData.items, {asHtmlID: "as_subtype_node", s
       <tr>
         <td>Flavor Text</td>
         <td>
-          <textarea name="flavor_text">${(flasher.params.flavor_text)!}</textarea>
+          <textarea rows="5" cols="80" name="flavor_text">${card.flavor_text!}</textarea>
           <span class="error">${(flasher.errors.flavor_text)!}</span>
         </td>
       </tr>
@@ -285,11 +269,8 @@ $("#as_subtype").autoSuggest(subtypesData.items, {asHtmlID: "as_subtype_node", s
     <table>
       <tr>
         <td></td>
-        <td><@link_to>Cancel</@link_to> | <input type="submit" value="Add new card"></td>
+        <td><@link_to>Cancel</@link_to> | <input type="submit" value="Save"></td>
       </tr>
     </table>
   </div>
 </@form>
-
-
-

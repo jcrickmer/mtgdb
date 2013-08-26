@@ -17,10 +17,10 @@ var card = {
 };
   </script>
   <div class="card_image_display">
-    <#if card.multiverseid < 1000000 >
+    <#if card.multiverseid < 900000 >
       <img src="http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.multiverseid}&type=card">
     </#if>
-    <#if (card.multiverseid >= 1000000) >
+    <#if (card.multiverseid >= 900000) >
       <img src="/mtgdb/cardImage?multiverseid=${card.multiverseid}">
     </#if>
   </div>
@@ -81,10 +81,4 @@ $("#card_info_value_mana_cost").html(imgs);
     </table>
   </div>
 
-<div><a href="#" id="button_edit_card">Edit Card</a></div>
-<script>
-$("#button_edit_card").button()
-                      .click(function( event ) {
-    event.preventDefault();
-});
-</script>
+<div><@link_to controller="cards" action="editForm" query_string="multiverseid=${card.multiverseid}">Edit Card</@link_to></div>

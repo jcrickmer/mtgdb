@@ -37,11 +37,13 @@ public class CardsController extends AppController {
 		list();
 	}
 
+
 	public void list() {
 		Paginator p = new Paginator(Card.class, 20, "multiverseid > ?", new Integer(0)).orderBy("multiverseid ASC");
 		session("currentSearch", p);
 		displaySearchResults();
     }
+
 
 	public void displaySearchResults() { // we will read Paginator off of the session
 		//setRequestEncoding("UTF-8");
@@ -75,6 +77,7 @@ public class CardsController extends AppController {
 		render("list");
 	}
 
+
     public void show(){
 		//setRequestEncoding("UTF-8");
 		//setResponseEncoding("UTF-8");
@@ -91,6 +94,7 @@ public class CardsController extends AppController {
             render("/system/404");
         }
     }
+
     
     @POST
 	public void getBaseCardByName() {
@@ -106,16 +110,59 @@ public class CardsController extends AppController {
 		}
 		respond(gson.toJson(map)).contentType("application/json").status(200);
     }
+
 	
-    private class RollItBackException extends Exception {
-		RollItBackException() {
-			super();
+    @POST
+    /**
+     * Edit an existing Card.
+     *
+     */
+    public void editCard(){
+		setEncoding("UTF-8");
+
+		// We will know which card to edit from multiverseid.  If they wanted to change the multiverseid, that will be in "multiverseid_changed".
+		Card card = (Card) Card.first("multiverseid = ?", param("multiverseid"));
+
+		if (card == null) {
+            view("message", "I don't know what card you are trying to edit.");
+            render("/system/404");
+			return;
 		}
 
-		RollItBackException(String msg) {
-			super(msg);
+		org.javalite.activejdbc.Errors errs = new org.javalite.activejdbc.Errors();
+		if (! this.requestHas("rarity_id") || this.param("rarity_id").equals("")) {
+			errs.put("rarity_id","Rarity is a required field.");
 		}
-    }
+		if (! this.requestHas("multiverseid") || this.param("multiverseid").equals("")) {
+			errs.put("multiverseid","Multiverseid is a required field.");
+		}
+		if (! this.requestHas("expansionset_id") || this.param("expansionset_id").equals("")) {
+			errs.put("expansionset_id","Expansion Set is a required field.");
+		}
+		if (! errs.isEmpty()) {
+			flash("errors", errs);
+			flash("params", params1st());
+			flash("message", "One or more fields are not correctly set.");
+			redirect(CardsController.class, "editForm");
+			return;
+		}
+
+		card.set("multiverseid", param("multiverseid_changed"));
+		card.set("rarity", param("rarity_id"));
+		card.set("expansionset_id", param("expansionset_id"));
+		card.set("flavor_text", param("flavor_text"));
+		card.set("card_number", param("card_number"));
+		logError("Do I have an ID?!  " + card.getId());
+		if (! card.saveIt()) {
+			flash("errors", errs);
+			flash("params", params1st());
+			flash("message", "Error saving the changes to the card.");
+			redirect(CardsController.class, "editForm");
+			return;
+		}
+		redirect(CardsController.class, "show", card.get("multiverseid"));
+	}
+
 
     @POST
     /**
@@ -139,6 +186,7 @@ public class CardsController extends AppController {
 						// we are building from an existing base card!!!  Woot!
 						bcard = BaseCard.findById(new Integer(this.param("basecard_id")));
 						if (bcard == null) {
+						    logError("Well, this is a problem.  It looks like you specified a card as the base card, but I don't know what card that is. " + this.param("basecard_id"));
 							errs.put("message","Well, this is a problem.  It looks like you specified a card as the base card, but I don't know what card that is.");
 						}
 					} else {
@@ -166,6 +214,7 @@ public class CardsController extends AppController {
 						errs.put("expansionset_id","Expansion Set is a required field.");
 					}
 					if (! errs.isEmpty()) {
+					    logError("Rolling back becauses errs is not empty.");
 						throw new RollItBackException();
 					}
 				}
@@ -234,7 +283,7 @@ public class CardsController extends AppController {
 		card.set("flavor_text", this.param("flavor_text")); // REVISIT - Looks like there may be a character encoding issue here.  I tried an emdash from UTF8 and it looks like it broke somewhere.
 		card.set("rarity", this.param("rarity_id"));
 	    
-		if (! card.save()) {
+		if (! card.insert()) {
 		    throw new RollItBackException("Error saving new card's card.");
 		}
 
@@ -249,6 +298,8 @@ public class CardsController extends AppController {
 		redirect(CardsController.class, "new_form");
 */
 	    } catch (RollItBackException e) {
+			    logError("Roll Back error thrown:");
+			    logError(e);
 		Base.rollbackTransaction();
 		flash("errors", errs);
 		flash("params", params1st());
@@ -381,6 +432,9 @@ public class CardsController extends AppController {
         view("subtypes", Subtype.findAll());
     }
 
+	/**
+	 * Display the form to enter a new card.
+	 */
     public void newForm() {
 		//setRequestEncoding("UTF-8");
 		//setResponseEncoding("UTF-8");
@@ -413,5 +467,57 @@ public class CardsController extends AppController {
 		   logError("context: " + cit.next());
 	}
 		*/
+    }
+
+
+	/**
+	 * Display the edit form.
+	 */
+    public void editForm() {
+		setEncoding("UTF-8");
+		
+		Map fParams = getFParams();
+
+		logError("Id is : " + param("multiverseid"));
+		Card c = (Card) Card.first("multiverseid = ?", param("multiverseid"));
+		logError("Card: " + c);
+        if (c != null) {
+            view("card", c);
+        } else {
+            view("message", "I don't know what card you are trying to edit.");
+            render("/system/404");
+			return;
+        }
+
+		view("expansionsets", ExpansionSet.findAll());
+        view("rarities", Rarity.findAll());
+        view("colors", Color.findAll());
+		
+		List<Type> types = Type.findAll();
+        view("types", types);
+		List<SelectOption> typesList = new ArrayList();
+		Iterator<Type> it = types.iterator();
+		while (it.hasNext()) {
+			Type cType = it.next();
+			int cTypeId = cType.getInteger("id").intValue();
+			SelectOption so = new SelectOption(cTypeId, cType.getString("type"));
+			//logError("param is " + fParams.get("type_id"));
+			so.setSelected(fParams.get("type_id") != null && fParams.get("type_id").equals("" + cTypeId));
+			typesList.add(so);
+		}
+		view("typesList", typesList);
+		
+        view("subtypes", Subtype.findAll());
+    }
+
+
+    private class RollItBackException extends Exception {
+		RollItBackException() {
+			super();
+		}
+
+		RollItBackException(String msg) {
+			super(msg);
+		}
     }
 }

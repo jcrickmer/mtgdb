@@ -49,7 +49,7 @@ public class CardImageProducer {
     }
 
     public void produce(Card card) throws IOException {
-	System.out.println("Making \"" + card.getTitle() + "\".");		
+		System.out.println("Making \"" + card.getTitle() + "\".");		
 		BufferedImage bi = loadBackgroundImage(card);
 
 		int dpi = 150;

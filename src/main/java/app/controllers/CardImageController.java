@@ -10,13 +10,33 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import us.newplatyp.util.Configuration;
+import us.newplatyp.mtgcardmaker.MTGCardMaker;
 
 
 /**
- * @author Igor Polevoy
+ * @author Jason Crickmer
  */
 public class CardImageController extends AppController {
+
+	private MTGCardMaker mtgCardMaker = null;
+
+	private synchronized void initMTGCardMarker() {
+		if (this.mtgCardMaker == null) {
+			Configuration config = new us.newplatyp.util.Configuration();
+			config.setProperty("path.output.card","output");
+			config.setProperty("path.symbols","symbols");
+			config.setProperty("template.definition.filename","input/templates/basic/basic.xml");
+
+			this.mtgCardMaker = new MTGCardMaker(config);
+		}
+	}
+
+
     public void index() {
+
+		if (this.mtgCardMaker == null) {
+			this.initMTGCardMarker();
+		}
 
 		String mid_s = this.param("multiverseid");
 		int mid = 0;
@@ -64,6 +84,7 @@ public class CardImageController extends AppController {
             render("/system/404");
 		}
     }
+
     protected String getContentType() {
 		return "image/png";
     }

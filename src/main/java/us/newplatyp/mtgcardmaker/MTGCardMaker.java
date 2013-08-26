@@ -37,7 +37,7 @@ public class MTGCardMaker implements MainProgram {
 
 	private Configuration config;
 
-	MTGCardMaker(Configuration config) {
+	public MTGCardMaker(Configuration config) {
 		this.config = config;
 	}
 
